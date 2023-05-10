@@ -6,6 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+chrono = "0.4.24"
+lambda_http = "0.8.0"
 
 lambda_runtime = "0.6.0"
 serde = "1.0.136"
@@ -13,3 +15,7 @@ serde_json = "1.0.96"
 tokio = { version = "1", features = ["macros"] }
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
+
+[lib]
+path = "src/lib/mod.rs"
+name = "lib"
