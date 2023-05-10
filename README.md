@@ -1,3 +1,12 @@
+# Disclaimer
+
+To avoid any confusion before running the app please using SAM cli to rename this app. To make sure it works run `sam deploy --guided` and when it asks for another name please enter another name otherwise `shubham-rust-sam-app` would be the name of your lambda function.
+
+The following screenshot illustrates where one should rename it
+
+ ![A screenshot displaying the place where one should choose a name](https://github.com/shubhamkumar13/rust-lambda-test-1/assets/13629677/aafc2af7-ff23-4be2-bb56-e6b7e6ea8ed2)
+
+
 # shubham-rust-sam-app
 
 This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders:
