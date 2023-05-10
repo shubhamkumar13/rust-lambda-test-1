@@ -194,7 +194,7 @@ struct Response {
     #[serde(rename = "statusCode")]
     status_code: i32,
     headers: Value,
-    body: String,
+    body: Value,
 }
 
 impl Response {
@@ -203,7 +203,7 @@ impl Response {
             is_base64_encoded,
             status_code,
             headers,
-            body: format!("{:#?}", body),
+            body,
         }
     }
 
