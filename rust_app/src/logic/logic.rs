@@ -136,7 +136,7 @@ impl<'a> InspectDeliverableImpl {
     }
 }
 
-impl<'a> InspectionResponseImpl {
+impl InspectionResponseImpl {
     pub fn new(
         status: InspectionStatus,
         shipper: Organization,
@@ -184,31 +184,23 @@ const DELIVERABLE: &str = r#"
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Request {
-    body: Value,
+    request: Value,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Response {
-    #[serde(rename = "isBase64Encoded")]
-    is_base64_encoded: bool,
-    #[serde(rename = "statusCode")]
-    status_code: i32,
-    headers: Value,
-    body: Value,
+    // #[serde(rename = "isBase64Encoded")]
+    // is_base64_encoded: bool,
+    // #[serde(rename = "statusCode")]
+    // status_code: i32,
+    // headers: Value,
+    response: String,
 }
 
 impl Response {
-    fn new(is_base64_encoded: bool, status_code: i32, headers: Value, body: Value) -> Self {
-        Self {
-            is_base64_encoded,
-            status_code,
-            headers,
-            body,
-        }
-    }
-
-    fn to_json(&self) -> Result<Value, Error> {
-        serde_json::to_value(self).map_err(Into::into)
+    pub fn new(input: InspectionResponse) -> Result<Self, serde_json::Error> {
+        let response = serde_json::to_string(&input)?;
+        Ok(Response { response })
     }
 }
 
@@ -216,9 +208,16 @@ pub async fn function_handler(request: LambdaEvent<Value>) -> Result<Value, Erro
     // timestamp is just for testing the template
     let now = now("2019-01-31T16:34:00-05:00");
     let contract = AcceptanceOfDeliveryClauseImpl::from_str(CONTRACT_STR)?.0;
-    let request = InspectDeliverableImpl::from_value(request.payload.clone())?.0;
-    let received = request.deliverable_received_at;
-    let inspection_passed = request.inspection_passed;
+    eprintln!("Body = {:#?}", request.payload["body"]);
+    let Value::String(body) = request.payload["body"].clone() else {
+        return Err("Body is not a string".into())
+    };
+    // eprintln!("Request = {:#?}", serde_json::from_str::<Request>(&body));
+    let request: Request = serde_json::from_str(&body)?;
+    let request = request.request;
+    eprintln!("Request = {:#?}", request);
+    let received: DateTime<Utc> = serde_json::from_value(request["deliverableReceivedAt"].clone())?;
+    let inspection_passed: bool = serde_json::from_value(request["inspectionPassed"].clone())?;
     if now < received {
         return Err("Transaction time is before the deliverable date.".into());
     };
@@ -240,9 +239,15 @@ pub async fn function_handler(request: LambdaEvent<Value>) -> Result<Value, Erro
         }
     }?;
 
-    let response = serde_json::to_value(
+    let response = Response::new(
         InspectionResponseImpl::new(status, contract.shipper, contract.receiver, now).0,
-    )?;
+    )?
+    .response;
 
-    serde_json::to_value(Response::new(false, 200, json!({}), response)).map_err(Into::into)
+    Ok(json!({
+        "isBase64Encoded" : false,
+        "statusCode" : 200,
+        "headers" : { },
+        "body" : response,
+    }))
 }
